@@ -11,8 +11,14 @@ const middlewares_1 = require("./middlewares");
 const config_1 = __importDefault(require("./config"));
 // import swaggerSpec from "./swagger";
 const logger_1 = __importDefault(require("./utils/logger"));
+const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
+app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+app.use((req, res, next) => {
+    logger_1.default.info(`Received request: ${req.method} ${req.url}`, req.body);
+    next();
+});
 app.use("/api/v1", routes_1.default);
 // app.use("/api/docs", serve, setup(swaggerSpec));
 app.get("/api/v1", (req, res) => {
