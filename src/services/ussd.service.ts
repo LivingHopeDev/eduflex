@@ -14,10 +14,11 @@ export class UssdService {
     text: string,
     serviceCode: string
   ) {
+    console.log({ sessionId, phoneNumber, text, serviceCode });
     log.info({ sessionId, phoneNumber, text, serviceCode });
 
     if (!phoneNumber) {
-      log.error("END Error: Phone number is missing.");
+      console.log("END Error: Phone number is missing.");
       return "END Error: Phone number is missing.";
     }
     // Find or create user
