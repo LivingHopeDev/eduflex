@@ -14,18 +14,17 @@ export class UssdService {
     text: string,
     serviceCode: string
   ) {
-    console.log({ sessionId, phoneNumber, text, serviceCode });
-    log.info({ sessionId, phoneNumber, text, serviceCode });
-
-    if (!phoneNumber) {
-      console.log("END Error: Phone number is missing.");
-      return "END Error: Phone number is missing.";
+    let numberToSubmit = "";
+    if (phoneNumber === undefined || phoneNumber === "") {
+      numberToSubmit = "+2348065108161";
+    } else {
+      numberToSubmit = phoneNumber;
     }
     // Find or create user
-    let user = await userService.findUser(phoneNumber);
+    let user = await userService.findUser(numberToSubmit);
     console.log(user);
     if (!user) {
-      user = await userService.createUser(phoneNumber);
+      user = await userService.createUser(numberToSubmit);
     }
 
     // Get or create session
