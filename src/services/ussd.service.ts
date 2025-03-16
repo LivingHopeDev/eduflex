@@ -23,7 +23,7 @@ export class UssdService {
 
     // Find or create user
     let user = await userService.findUser(numberToSubmit);
-    console.log(user);
+    console.error(user);
     if (!user) {
       user = await userService.createUser(numberToSubmit);
     }
