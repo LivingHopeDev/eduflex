@@ -13,6 +13,9 @@ export class UssdService {
     text: string,
     serviceCode: string
   ) {
+    if (!phoneNumber) {
+      return "END Error: Phone number is missing.";
+    }
     // Find or create user
     let user = await userService.findUser(phoneNumber);
     console.log(user);
