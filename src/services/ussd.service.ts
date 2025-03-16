@@ -15,11 +15,12 @@ export class UssdService {
     serviceCode: string
   ) {
     let numberToSubmit = "";
-    if (phoneNumber === undefined || phoneNumber === "") {
+    if (!phoneNumber || phoneNumber.trim() === "") {
       numberToSubmit = "+2348065108161";
     } else {
       numberToSubmit = phoneNumber;
     }
+
     // Find or create user
     let user = await userService.findUser(numberToSubmit);
     console.log(user);

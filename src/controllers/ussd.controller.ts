@@ -7,6 +7,8 @@ const ussdService = new UssdService();
 export const processUssdRequest = asyncHandler(
   async (req: Request, res: Response) => {
     const { sessionId, phoneNumber, text, serviceCode } = req.body;
+    console.log("Received phoneNumber:", phoneNumber);
+
     const response = await ussdService.handleUssdRequest(
       sessionId,
       phoneNumber,
