@@ -2,6 +2,7 @@
 import { UserService } from "./userService";
 import { SessionService } from "./sessionService";
 import { CourseService } from "./courseService";
+import log from "../utils/logger";
 const userService = new UserService();
 const sessionService = new SessionService();
 const courseService = new CourseService();
@@ -13,7 +14,10 @@ export class UssdService {
     text: string,
     serviceCode: string
   ) {
+    log.error({ sessionId, phoneNumber, text, serviceCode });
+
     if (!phoneNumber) {
+      log.error("END Error: Phone number is missing.");
       return "END Error: Phone number is missing.";
     }
     // Find or create user
