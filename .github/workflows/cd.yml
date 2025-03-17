@@ -24,21 +24,27 @@ jobs:
 
       - name: Test SSH Connection
         run: |
-          ssh -i ~/.ssh/new_vps_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "echo SSH connection successful"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "echo SSH connection successful"
 
       - name: Deploy to VPS & Setup Nginx
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
           APP_NAME: "eduflex"
-          DOMAIN_NAME: $SERVER_HOST
+          GIT_REPO: "git@github.com:LivingHopeDev/eduflex.git"
+          DOMAIN_NAME: ${{ secrets.SERVER_HOST }}
           PORT: "3000"
         run: |
           ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST << 'EOF'
           set -x  # Print each command before executing
           echo "Deploying $APP_NAME to VPS..."
 
-          # 1️⃣ Navigate to project directory
+          # 1️⃣ Navigate to project directory or clone if missing
+          if [ ! -d "/root/$APP_NAME/.git" ]; then
+            echo "📥 Cloning repository..."
+            git clone $GIT_REPO /root/$APP_NAME || { echo "❌ Git clone failed!"; exit 1; }
+          fi
+
           cd /root/$APP_NAME || { echo "❌ Directory not found!"; exit 1; }
 
           # 2️⃣ Pull latest changes
