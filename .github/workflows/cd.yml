@@ -39,34 +39,35 @@ jobs:
           set -x  # Print each command before executing
           echo "Deploying $APP_NAME to VPS..."
 
-          # 1️⃣ Navigate to project directory or clone if missing
+          # 1️⃣ Ensure project directory exists
           if [ ! -d "/root/$APP_NAME/.git" ]; then
             echo "📥 Cloning repository..."
+            rm -rf /root/$APP_NAME  # Remove any incomplete or non-git directory
             git clone git@github.com:LivingHopeDev/eduflex.git /root/$APP_NAME || { echo "❌ Git clone failed!"; exit 1; }
+          else
+            echo "🔄 Repository already exists, pulling latest changes..."
+            cd /root/$APP_NAME
+            git reset --hard  # Ensure a clean state before pulling
+            git pull origin main || { echo "❌ Git pull failed!"; exit 1; }
           fi
 
-          cd /root/$APP_NAME || { echo "❌ Directory not found!"; exit 1; }
-
-          # 2️⃣ Pull latest changes
-          echo "🔄 Pulling latest changes..."
-          git pull origin main || { echo "❌ Git pull failed!"; exit 1; }
-
-          # 3️⃣ Install dependencies
+          # 2️⃣ Install dependencies
           echo "📦 Installing dependencies..."
+          cd /root/$APP_NAME
           npm install --production || { echo "❌ NPM install failed!"; exit 1; }
 
-          # 4️⃣ Restart app with PM2
+          # 3️⃣ Restart app with PM2
           echo "🚀 Restarting app with PM2..."
           pm2 restart $APP_NAME || pm2 start npm --name "$APP_NAME" -- run start
           pm2 save
 
-          # 5️⃣ Install Nginx if not installed
+          # 4️⃣ Install Nginx if not installed
           if ! command -v nginx &> /dev/null; then
             echo "🌐 Installing Nginx..."
             apt update && apt install -y nginx
           fi
 
-          # 6️⃣ Configure Nginx reverse proxy
+          # 5️⃣ Configure Nginx reverse proxy
           echo "🛠 Setting up Nginx..."
           cat > /etc/nginx/sites-available/$APP_NAME <<EOL
           server {
