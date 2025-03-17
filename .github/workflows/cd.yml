@@ -42,7 +42,7 @@ jobs:
           # 1️⃣ Navigate to project directory or clone if missing
           if [ ! -d "/root/$APP_NAME/.git" ]; then
             echo "📥 Cloning repository..."
-            git clone $GIT_REPO /root/$APP_NAME || { echo "❌ Git clone failed!"; exit 1; }
+            git clone git@github.com:LivingHopeDev/eduflex.git /root/$APP_NAME || { echo "❌ Git clone failed!"; exit 1; }
           fi
 
           cd /root/$APP_NAME || { echo "❌ Directory not found!"; exit 1; }
