@@ -1,0 +1,43 @@
+name: Deploy to Hostinger VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to VPS
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+          APP_NAME: "eduflex"
+        run: |
+          ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST << 'EOF'
+            echo "Deploying $APP_NAME to VPS..."
+
+            # Navigate to the project directory
+            cd /root/$APP_NAME || exit 1
+
+            # Pull latest code
+            git pull origin main
+
+            # Install dependencies
+            npm install --production
+
+            # Restart the app with PM2
+            pm2 restart $APP_NAME || pm2 start npm --name "$APP_NAME" -- run start
+
+            echo "Deployment complete!"
+          EOF
