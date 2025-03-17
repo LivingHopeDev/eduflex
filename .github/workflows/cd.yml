@@ -1,4 +1,4 @@
-name: Deploy to Hostinger VPS
+name: Deploy to AWS EC2
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
@@ -26,56 +26,66 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "echo SSH connection successful"
 
-      - name: Deploy to VPS & Setup Nginx
+      - name: Deploy to AWS EC2 & Setup Server
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
           APP_NAME: "eduflex"
           GIT_REPO: "git@github.com:LivingHopeDev/eduflex.git"
-          DOMAIN_NAME: ${{ secrets.SERVER_HOST }}
           PORT: "3000"
         run: |
-          ssh -o StrictHostKeyChecking=no $SERVER_USERNAME@$SERVER_HOST << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} << EOF
           set -x  # Print each command before executing
-          echo "Deploying $APP_NAME to VPS..."
+          echo "🚀 Setting up AWS EC2 for deployment..."
 
-          # 1️⃣ Ensure project directory exists
-          if [ ! -d "/root/$APP_NAME/.git" ]; then
-            echo "📥 Cloning repository..."
-            rm -rf /root/$APP_NAME  # Remove any incomplete or non-git directory
-            git clone git@github.com:LivingHopeDev/eduflex.git /root/$APP_NAME || { echo "❌ Git clone failed!"; exit 1; }
-          else
-            echo "🔄 Repository already exists, pulling latest changes..."
-            cd /root/$APP_NAME
-            git reset --hard  # Ensure a clean state before pulling
-            git pull origin main || { echo "❌ Git pull failed!"; exit 1; }
+          # 1️⃣ Update system packages
+          sudo apt update && sudo apt upgrade -y
+
+          # 2️⃣ Install required software
+          echo "📦 Installing dependencies (Node.js, npm, PM2, Git, Nginx)..."
+          sudo apt install -y git nginx curl unzip
+
+          # 3️⃣ Install Node.js (if missing)
+          if ! command -v node &> /dev/null; then
+            echo "🟢 Installing Node.js..."
+            curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+            sudo apt install -y nodejs
           fi
 
-          # 2️⃣ Install dependencies
+          # 4️⃣ Install PM2 globally
+          npm install -g pm2
+
+          # 5️⃣ Clone repo if not present
+          if [ ! -d "/home/${SERVER_USERNAME}/eduflex/.git" ]; then
+            echo "📥 Cloning repository..."
+            git clone ${GIT_REPO} /home/${SERVER_USERNAME}/eduflex || { echo "❌ Git clone failed!"; exit 1; }
+          fi
+
+          cd /home/${SERVER_USERNAME}/eduflex || { echo "❌ Directory not found!"; exit 1; }
+
+          # 6️⃣ Pull latest changes
+          echo "🔄 Pulling latest changes..."
+          git pull origin main || { echo "❌ Git pull failed!"; exit 1; }
+
+          # 7️⃣ Install Node.js dependencies
           echo "📦 Installing dependencies..."
-          cd /root/$APP_NAME
           npm install --production || { echo "❌ NPM install failed!"; exit 1; }
 
-          # 3️⃣ Restart app with PM2
-          echo "🚀 Restarting app with PM2..."
-          pm2 restart $APP_NAME || pm2 start npm --name "$APP_NAME" -- run start
+          # 8️⃣ Start/Restart app with PM2
+          echo "🚀 Starting app with PM2..."
+          pm2 restart eduflex || pm2 start npm --name "eduflex" -- run start
           pm2 save
+          pm2 startup systemd
 
-          # 4️⃣ Install Nginx if not installed
-          if ! command -v nginx &> /dev/null; then
-            echo "🌐 Installing Nginx..."
-            apt update && apt install -y nginx
-          fi
-
-          # 5️⃣ Configure Nginx reverse proxy
-          echo "🛠 Setting up Nginx..."
-          cat > /etc/nginx/sites-available/$APP_NAME <<EOL
+          # 9️⃣ Set up Nginx Reverse Proxy
+          echo "🛠 Configuring Nginx..."
+          sudo tee /etc/nginx/sites-available/eduflex > /dev/null <<EOL
           server {
               listen 80;
-              server_name $SERVER_HOST;
+              server_name _;
 
               location / {
-                  proxy_pass http://localhost:$PORT;
+                  proxy_pass http://localhost:3000;
                   proxy_http_version 1.1;
                   proxy_set_header Upgrade \$http_upgrade;
                   proxy_set_header Connection 'upgrade';
@@ -85,8 +95,15 @@ jobs:
           }
           EOL
 
-          ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
-          nginx -t && systemctl restart nginx
+          sudo ln -sf /etc/nginx/sites-available/eduflex /etc/nginx/sites-enabled/
+          sudo nginx -t && sudo systemctl restart nginx
 
-          echo "✅ Nginx setup complete!"
+          # 🔟 Allow firewall rules
+          echo "🔒 Configuring firewall..."
+          sudo ufw allow OpenSSH
+          sudo ufw allow 'Nginx Full'
+          sudo ufw allow ${PORT}
+          sudo ufw --force enable
+
+          echo "✅ Deployment complete!"
           EOF
