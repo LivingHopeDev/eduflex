@@ -22,6 +22,10 @@ jobs:
           ssh-add ~/.ssh/new_vps_key
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Test SSH Connection
+        run: |
+          ssh -i ~/.ssh/new_vps_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} "echo SSH connection successful"
+
       - name: Deploy to VPS
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
