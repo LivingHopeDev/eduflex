@@ -22,17 +22,21 @@ class SessionService {
                     data: {
                         userId,
                         state: "NEW",
+                        data: "{}",
                     },
                 });
             }
             return session;
         });
     }
-    updateSessionState(userId, sessionId, state) {
-        return __awaiter(this, void 0, void 0, function* () {
+    updateSessionState(userId_1, sessionId_1, state_1) {
+        return __awaiter(this, arguments, void 0, function* (userId, sessionId, state, data = {}) {
             return yield __1.prismaClient.session.update({
                 where: { userId },
-                data: { state },
+                data: {
+                    state,
+                    data: typeof data === "string" ? data : JSON.stringify(data),
+                },
             });
         });
     }

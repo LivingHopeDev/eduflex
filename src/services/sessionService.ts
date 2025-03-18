@@ -11,6 +11,7 @@ export class SessionService {
         data: {
           userId,
           state: "NEW",
+          data: "{}",
         },
       });
     }
@@ -18,10 +19,18 @@ export class SessionService {
     return session;
   }
 
-  async updateSessionState(userId: string, sessionId: string, state: string) {
+  async updateSessionState(
+    userId: string,
+    sessionId: string,
+    state: string,
+    data = {}
+  ) {
     return await prismaClient.session.update({
       where: { userId },
-      data: { state },
+      data: {
+        state,
+        data: typeof data === "string" ? data : JSON.stringify(data),
+      },
     });
   }
 }
