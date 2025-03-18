@@ -20,11 +20,18 @@ const courseService = new courseService_1.CourseService();
 class UssdService {
     handleUssdRequest(sessionId, phoneNumber, text, serviceCode) {
         return __awaiter(this, void 0, void 0, function* () {
+            let numberToSubmit = "";
+            if (!phoneNumber || phoneNumber.trim() === "") {
+                numberToSubmit = "+2348065108161";
+            }
+            else {
+                numberToSubmit = phoneNumber;
+            }
             // Find or create user
-            let user = yield userService.findUser(phoneNumber);
-            console.log(user);
+            let user = yield userService.findUser(numberToSubmit);
+            console.error(user);
             if (!user) {
-                user = yield userService.createUser(phoneNumber);
+                user = yield userService.createUser(numberToSubmit);
             }
             // Get or create session
             let session = yield sessionService.getSessionState(user.id, sessionId);

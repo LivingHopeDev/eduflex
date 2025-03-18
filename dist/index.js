@@ -15,6 +15,7 @@ const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true, limit: "50mb" }));
 app.use((req, res, next) => {
     logger_1.default.info(`Received request: ${req.method} ${req.url}`, req.body);
     next();
