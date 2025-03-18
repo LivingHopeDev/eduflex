@@ -78,5 +78,55 @@ class CourseService {
             });
         });
     }
+    // Admin
+    // services/courseService.ts
+    // Add these methods to your existing CourseService class
+    createCourse(title, description, duration) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield __1.prismaClient.course.create({
+                data: {
+                    title,
+                    description,
+                    duration,
+                },
+            });
+        });
+    }
+    updateCourse(id, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield __1.prismaClient.course.update({
+                where: { id },
+                data,
+            });
+        });
+    }
+    deleteCourse(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield __1.prismaClient.course.delete({
+                where: { id },
+            });
+        });
+    }
+    addModule(courseId, title) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield __1.prismaClient.module.create({
+                data: {
+                    title,
+                    courseId,
+                },
+            });
+        });
+    }
+    addLesson(moduleId, title, content) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield __1.prismaClient.lesson.create({
+                data: {
+                    title,
+                    content,
+                    moduleId,
+                },
+            });
+        });
+    }
 }
 exports.CourseService = CourseService;

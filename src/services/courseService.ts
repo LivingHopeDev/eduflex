@@ -58,4 +58,54 @@ export class CourseService {
       },
     });
   }
+
+  // Admin
+
+  // services/courseService.ts
+  // Add these methods to your existing CourseService class
+
+  async createCourse(title: string, description: string, duration: string) {
+    return await prismaClient.course.create({
+      data: {
+        title,
+        description,
+        duration,
+      },
+    });
+  }
+
+  async updateCourse(
+    id: string,
+    data: { title?: string; description?: string; duration?: string }
+  ) {
+    return await prismaClient.course.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteCourse(id: string) {
+    return await prismaClient.course.delete({
+      where: { id },
+    });
+  }
+
+  async addModule(courseId: string, title: string) {
+    return await prismaClient.module.create({
+      data: {
+        title,
+        courseId,
+      },
+    });
+  }
+
+  async addLesson(moduleId: string, title: string, content: string) {
+    return await prismaClient.lesson.create({
+      data: {
+        title,
+        content,
+        moduleId,
+      },
+    });
+  }
 }
